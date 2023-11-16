@@ -1,0 +1,48 @@
+﻿@{
+    ViewBag.Title = "Chat";
+}
+
+<h2 class="display-4">Chat Application</h2>
+<div class="row">
+    <div class="col-3">
+        <h3>Users</h3>
+        <ul id="users"></ul>
+    </div>
+    <div class="col-9">
+        <div>Display Name :<span id="username"></span></div>
+        <div>
+            <input type="text" id="msg" onkeypress="return /^[A-Za-z\s]+$/.test(event.key)" />   @*( only for alphabet text have to use: oninput="this.value = this.value.replace(/[^A-Za-z]/g, '')")*@
+            <button type="button" id="send">Send</button>
+        </div>
+        <ul id="message"></ul>
+    </div>
+</div>
+
+@section scripts{
+    <script src="~/Scripts/jquery.signalR-2.4.3.js"></script>
+    <script src="~/signalr/hubs"></script>
+
+    <script type="text/javascript">
+        $(document).ready(() => {
+            var name = prompt("Display name?");
+            var hub = $.connection.messageHub;
+            hub.client.updateUsers = (list) => {
+                $("#users").empty();
+                for (var i = 0; i < list.length; i++) {
+                    $("#users").append(`<li>${list[i]}</li>`);
+                }
+            }
+            hub.client.broadcast = (n, m) => {
+                $("#message").append(`<li>${n}: ${m}</l>`)
+            }
+            hub.connection.start()
+                .done(() => {
+                    hub.server.addMe(name);
+                    $("#send").click(() => {
+                        hub.server.send(name, $("#msg").val());
+                        $("#msg").val('');
+                    });
+                });
+        });
+    </script>
+}
